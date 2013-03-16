@@ -40,7 +40,7 @@
 
     leaflet_map.scrollWheelZoom.disable();
 
-    d3.json("assets/data/ct_counties.geo.json", function(data) {
+    d3.json("ct_counties.geo.json", function(data) {
     var leaflet_paths = leaflet_map.addLayer(new L.GeoJSON(data));
     });
     
@@ -55,7 +55,7 @@
     
     var g = svg.append("g").attr("class", "leaflet-zoom-hide"); 
     
-    d3.json("assets/data/ct_counties.geo.json", function(collection) {
+    d3.json("ct_counties.geo.json", function(collection) {
       var bounds = d3.geo.bounds(collection);
       
       var path = d3.geo.path().projection(project);
