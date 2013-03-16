@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GeoJSON Mapping: Leaflet vs d3</title>
+  <style>
+    div.map-container {
+      width: 100%;
+      height: 300px;
+    }
+    path {
+      fill: #000;
+      fill-opacity: .2;
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
+    path:hover {
+      fill: brown;
+      fill-opacity: .7;
+    }
+  </style>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.css" />
+  <!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" />
+  <![endif]-->
+</head>
+<body>
+  <h1>Using Leaflet</h1>
+  <div id="leaflet-map" class="map-container"></div>
+  <h1>Using d3</h1>
+  <div id="d3-map" class="map-container"></div>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet-0.4/leaflet.js"></script>
+  <script>
+    
+    // MAPPING GEOJSON WITH LEAFLET
+    var leaflet_map = new L.Map("leaflet-map")
+     .setView(new L.LatLng(41.5, -72.8), 8)
+     .addLayer(new L.TileLayer("http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/44094/256/{z}/{x}/{y}.png"));
+
+    leaflet_map.scrollWheelZoom.disable();
+
+    d3.json("ct_counties.geo.json", function(data) {
+    var leaflet_paths = leaflet_map.addLayer(new L.GeoJSON(data));
+    });
+    
+    // MAPPING GEOJSON WITH D3
+    var d3_map = new L.Map("d3-map")
+      .setView(new L.LatLng(41.5, -72.8), 8) 
+      .addLayer(new L.TileLayer("http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/44094/256/{z}/{x}/{y}.png"));
+
+    d3_map.scrollWheelZoom.disable();
+
+    var svg = d3.select(d3_map.getPanes().overlayPane).append("svg"); 
+    
+    var g = svg.append("g").attr("class", "leaflet-zoom-hide"); 
+    
+    d3.json("ct_counties.geo.json", function(collection) {
+      var bounds = d3.geo.bounds(collection);
+      
+      var path = d3.geo.path().projection(project);
+      
+      var feature = g.selectAll("path")
+          .data(collection.features)
+        .enter().append("path")
+          .attr('class','county');
+      
+      d3_map.on("viewreset", reset);
+      
+      reset();
+      
+      function project(x) {
+        var point = d3_map.latLngToLayerPoint(new L.LatLng(x[1], x[0]));
+        return [point.x, point.y];
+      }
+      
+      function reset() {
+        var bottomLeft = project(bounds[0]); 
+        var topRight = project(bounds[1]);
+        svg.attr("width", topRight[0] - bottomLeft[0])
+          .attr("height", bottomLeft[1] - topRight[1])
+          .style("margin-left", bottomLeft[0] + "px")
+          .style("margin-top", topRight[1] + "px");
+        g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
+        feature.attr("d", path);
+      }
+    });
+    
+  </script>
+</body>
+</html>
